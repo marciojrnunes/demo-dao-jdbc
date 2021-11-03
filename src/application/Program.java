@@ -17,6 +17,7 @@ public class Program {
 		
 		SellerDao sellerDao = DaoFactory.createSellerDao();  //Utilizando o modelo Factory o programa não conhece a implementação sellerDaoJDBC
 		
+		System.out.println("=== TEST 1: seller findById====");
 		Seller seller = sellerDao.findById(3);
 		
 		System.out.println(seller);
