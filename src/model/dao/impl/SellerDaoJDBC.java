@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -94,8 +97,86 @@ public class SellerDaoJDBC implements SellerDao{
 
 	@Override
 	public List<Seller> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName "
+					+ "FROM seller INNER JOIN department "
+					+ "ON seller.DepartmentId = department.Id "
+					+ "ORDER BY Name ");
+			
+			rs = st.executeQuery();
+			
+			List<Seller> list = new ArrayList<Seller>();
+			//Cria um map associando cada Department ao seu DepartmentId
+			Map<Integer, Department> map = new HashMap<>();
+			
+			while(rs.next()) { //Enquanto existe algum registro na consulta
+				//Verifica se o departamento já existe, buscando seu id no mapeamento
+				Department dep = map.get(rs.getInt("DepartmentId"));
+				//Se não existir o id no map instancia o departamento
+				if(dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(rs.getInt("DepartmentId"), dep);
+				}
+				
+				//Transforma a consulta na forma de linhas e colunas nos respectivos Objetos associados dos tipos Seller e Department
+				Seller obj = instantiateSeller(rs, dep);  //Instancia o seller
+				list.add(obj); //Adiciona o vendedor na lista
+			}
+			return list;  //Retorna a lista de vendedores do departamento
+			
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
+	}
+
+
+	@Override
+	public List<Seller> findByDepartment(Department department) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName "
+					+ "FROM seller INNER JOIN department "
+					+ "ON seller.DepartmentId = department.Id "
+					+ "WHERE DepartmentId = ? "
+					+ "ORDER BY Name ");
+			
+			st.setInt(1, department.getId());  //O parametro 1 da consulta será substituido pelo argumento "DeparmentId" do método
+			
+			rs = st.executeQuery();
+			
+			List<Seller> list = new ArrayList<Seller>();
+			//Cria um map associando cada Department ao seu DepartmentId
+			Map<Integer, Department> map = new HashMap<>();
+			
+			while(rs.next()) { //Enquanto existe algum registro na consulta
+				//Verifica se o departamento já existe, buscando seu id no mapeamento
+				Department dep = map.get(rs.getInt("DepartmentId"));
+				//Se não existir o id no map instancia o departamento
+				if(dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(rs.getInt("DepartmentId"), dep);
+				}
+				
+				//Transforma a consulta na forma de linhas e colunas nos respectivos Objetos associados dos tipos Seller e Department
+				Seller obj = instantiateSeller(rs, dep);  //Instancia o seller
+				list.add(obj); //Adiciona o vendedor na lista
+			}
+			return list;  //Retorna a lista de vendedores do departamento
+			
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 
 }
